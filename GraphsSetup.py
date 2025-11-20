@@ -1,8 +1,17 @@
 import pandas as pd
 import plotly.express as px
+import GraphStyle as gs_style
+import plotly.io as pio
 
 # Incorporate data
 df = pd.read_excel(r"D:\_University\Fall 2025\games_excel.xlsx") # Change this based on who is running the code
+
+
+# Style Setup
+
+pio.templates["steam_template"] = gs_style.steam_template
+pio.templates.default = "steam_template"
+
 
 # Handling Items ===================
 
@@ -70,7 +79,6 @@ genre_popularity_fig = px.line(
     labels={'Year released': 'Year of Release', 'count': 'Number of Games Released'},
     markers=True,
     hover_name='Genres',
-    width=800,
     height=600
 )
 

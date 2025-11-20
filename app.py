@@ -7,14 +7,11 @@ import GraphsSetup as gs
 
 # ------------------- PLotly Figures and Data -------------------- #
 
+
+
 Fig1 = gs.genre_popularity_fig
 
-Fig1.update_layout(
-    plot_bgcolor='#f9f9f9',  # Set a light background color for the plot area
-    paper_bgcolor='white', # Set background for the entire figure
-    font_family="Poppins",
-    title={'x':0.5} # Center the title
-)
+
 # ------------------- DASH APP SETUP -------------------- #
 external_stylesheets = [
     {
