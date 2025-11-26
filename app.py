@@ -10,6 +10,9 @@ import GraphsSetup as gs
 
 
 Fig1 = gs.genre_popularity_fig
+Fig2 = gs.active_players_fig
+Fig3 = gs.bubble_fig
+Fig4 = gs.wc_fig
 
 
 # ------------------- DASH APP SETUP -------------------- #
@@ -49,21 +52,30 @@ layout_home = html.Main(
                         html.H2("Active Players Per Genre", className="card-title"),
                         html.P("(bar chart)", className="card-subtitle"),
                     ]),
-                    html.Div("Bar Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
+                    html.Div(className="actual-content", children=[
+                        dcc.Graph(figure=Fig2)
+                    ]),
+                    #html.Div("Bar Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
                 html.Div(className="card", children=[
                     html.Div(className="card-header", children=[
                         html.H2("Genre Explore", className="card-title"),
                         html.P("(bubble chart)", className="card-subtitle"),
                     ]),
-                    html.Div("Bubble Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
+                    html.Div(className="actual-content", children=[
+                        dcc.Graph(figure=Fig3)
+                    ]),
+                    #html.Div("Bubble Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
                 html.Div(className="card", children=[
                     html.Div(className="card-header", children=[
                         html.H2("Top Performing Tags", className="card-title"),
                         html.P("(word cloud)", className="card-subtitle"),
                     ]),
-                    html.Div("Word Cloud Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
+                    html.Div(className="actual-content", children=[
+                        dcc.Graph(figure=Fig4)
+                    ]),
+                    #html.Div("Word Cloud Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
             ],
         ),
