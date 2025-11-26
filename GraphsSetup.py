@@ -2,17 +2,18 @@ import pandas as pd
 import plotly.express as px
 import GraphStyle as gs_style
 import plotly.io as pio
+from wordcloud import WordCloud
 
 # Incorporate data
 df = pd.read_excel(r"D:\_University\Fall 2025\games_excel.xlsx") # Change this based on who is running the code
-
+#df = pd.read_csv('cleaned_games.csv', index_col=False)
 
 # Style Setup
 
 pio.templates["steam_template"] = gs_style.steam_template
 pio.templates.default = "steam_template"
 
-
+# Genre Popularity
 # Handling Items ===================
 
 df['Year released'] = pd.to_datetime(df['Release date'], errors='coerce').dt.year
@@ -34,7 +35,10 @@ def parse_owners(owner_str):
             return None
     return None
 
-df['Owners (numeric)'] = df['Estimated owners'].apply(parse_owners)
+
+# i had the change the key since there was a key error with just "Estimated owners". since there are three 
+# different estimated owners columns, i just picked one but can change to whatever
+df['Owners (numeric)'] = df['Estimated owners by cat'].apply(parse_owners)
 
 # Positive Review Percentage ====================
 df['Positive Review %'] = (df['Positive'] / (df['Positive'] + df['Negative'] + 1)) * 100
@@ -83,4 +87,92 @@ genre_popularity_fig = px.line(
 )
 
 
+# Active Players Per Genre
+# there isn't actually a way to show active players so uhh this will work for now
+# could change to playtime last two weeks maybe
+df_active_players = df.copy()
+df_active_players = df_active_players[['Genres', 'Estimated owners by review']]
+
+# converting strings into actual lists for parsing
+def str_to_list(x):
+    if isinstance(x, list):
+        return x  # already a list
+    elif isinstance(x, str):
+        # Remove brackets if present
+        x = x.strip("[]")
+        if not x:
+            return []
+        # Split by comma and strip whitespace
+        return [tag.strip() for tag in x.split(",")]
+    else:
+        return []  # for NaNs
+    
+df_active_players['Genres'] = df_active_players['Genres'].apply(str_to_list)
+df_active_players = df_active_players.explode('Genres')
+df_active_players = df_active_players.groupby('Genres', as_index=False)['Estimated owners by review'].sum()
+df_active_players = df_active_players.sort_values(by='Estimated owners by review', ascending=False)
+
+# only keep the top 10 genres
+df_active_players = df_active_players.head(10)
+# bar chart of players per genre
+# hard to read genres vertically, so making horizontal
+active_players_fig = px.bar(
+    df_active_players, 
+    y='Genres', 
+    x='Estimated owners by review', 
+    title='Estimated Owners Per Genre', 
+    text='Estimated owners by review',
+    orientation='h')
+
+
+# Bubble Chart
+df_bubble = df.copy()
+df_bubble = df_bubble[['Genres', 'Average playtime forever', 'Positive Review %']]
+df_bubble['Genres'] = df_bubble['Genres'].apply(str_to_list)
+df_bubble = df_bubble.explode('Genres')
+df_bubble = df_bubble.groupby('Genres', as_index=False).agg({
+    'Average playtime forever': 'mean',
+    'Positive Review %': 'mean'
+})
+df_bubble = df_bubble.sort_values(by='Positive Review %', ascending=False)
+# only keep the top 10 genres by review
+df_bubble = df_bubble.head(10)
+# size will be count of games in that genre
+genre_counts = df_bubble['Genres'].value_counts().reset_index()
+genre_counts.columns = ['Genres', 'count']
+print(genre_counts)
+df_bubble = pd.merge(df_bubble, genre_counts, on='Genres')
+bubble_fig = px.scatter(
+    df_bubble, 
+    x='Average playtime forever', 
+    y='Positive Review %', 
+    size='count', 
+    color='Genres', 
+    hover_name='Genres', 
+    title='Average Playtime vs Positive Review % per Genre',
+    size_max=60)
+# need to change the values on this because everything is 1 so there is no size 
+# difference but good enough for now surely
+
+
+# Genre Word Cloud
+df_wc = df.copy()
+df_wc = df_wc['Genres']
+
+
+df_wc = df_wc.apply(str_to_list)
+df_wc = df_wc.explode()
+wc_count = df_wc.value_counts().reset_index()
+
+wc_dict = {}
+for k, v in zip(wc_count['Genres'], wc_count['count']):
+    wc_dict[k] = int(v)
+
+wc = WordCloud(
+    width=800, 
+    height=600, 
+    background_color="#171a21", 
+    colormap="Blues").generate_from_frequencies(wc_dict)
+wc_fig = px.imshow(wc, aspect="auto")
+wc_fig.update_layout(xaxis_title='', yaxis_title='', xaxis=dict(visible=False), yaxis=dict(visible=False))
 
