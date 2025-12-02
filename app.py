@@ -7,14 +7,12 @@ import GraphsSetup as gs
 
 # ------------------- PLotly Figures and Data -------------------- #
 
-
-
+# Homepage Figures
 Fig1 = gs.genre_popularity_fig
 Fig2 = gs.active_players_fig
 Fig3 = gs.bubble_fig
 Fig4 = gs.wc_fig
 Fig5 = gs.scatterplot_fig
-
 
 # ------------------- DASH APP SETUP -------------------- #
 external_stylesheets = [
@@ -40,11 +38,11 @@ layout_home = html.Main(
             children=[
                 html.Div(className="card", children=[
                     html.Div(className="card-header", children=[
-                        html.H2("Active Players Over Time", className="card-title"),
+                        html.H2("Game Releases Over Time", className="card-title"),
                         html.P("(line chart)", className="card-subtitle"),
                     ]),
                     html.Div(className="actual-content", children=[
-                        dcc.Graph(figure=Fig1)
+                        dcc.Graph(figure=Fig1, responsive=True)
                     ]),
                     # html.Div("Line Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
@@ -54,7 +52,7 @@ layout_home = html.Main(
                         html.P("(bar chart)", className="card-subtitle"),
                     ]),
                     html.Div(className="actual-content", children=[
-                        dcc.Graph(figure=Fig2)
+                        dcc.Graph(figure=Fig2, responsive=True)
                     ]),
                     #html.Div("Bar Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
@@ -64,7 +62,7 @@ layout_home = html.Main(
                         html.P("(bubble chart)", className="card-subtitle"),
                     ]),
                     html.Div(className="actual-content", children=[
-                        dcc.Graph(figure=Fig3)
+                        dcc.Graph(figure=Fig3, responsive=True)
                     ]),
                     #html.Div("Bubble Chart Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
@@ -74,7 +72,7 @@ layout_home = html.Main(
                         html.P("(word cloud)", className="card-subtitle"),
                     ]),
                     html.Div(className="actual-content", children=[
-                        dcc.Graph(figure=Fig4)
+                        dcc.Graph(figure=Fig4, responsive=True)
                     ]),
                     #html.Div("Word Cloud Placeholder", className="placeholder-content"), # ======== Insert Chart Here =========
                 ]),
@@ -155,8 +153,17 @@ def layout_detail(game_id):
     total_number_reviews = game_df.get('Total number of reviews', "N/A").iloc[0]
     genres = game_df.get('Genres', "N/A").iloc[0]
     avg_playtime = game_df.get('Average playtime forever', "N/A").iloc[0]
-
-
+    achievements = game_df.get('Achievements', "N/A").iloc[0]
+    
+    # Figures
+    radar_fig = gs.radar_chart(game_df)
+    
+    # Create the chart content conditionally
+    radar_chart_content = (
+        dcc.Graph(figure=radar_fig, responsive=True, config={'displayModeBar': False})
+        if radar_fig is not None
+        else html.Div("No data available for chart", className="placeholder-content")
+    )
 
     return html.Main(
         className="detail-page",
@@ -171,7 +178,7 @@ def layout_detail(game_id):
                         children=[
                             # Use the dynamic title here
                             html.H1(name), 
-                            html.P("Price: $" + str(price), className="price"),
+                            html.P("Price: " + str(price), className="price"),
                             html.P("Genres: " + genres, id="genres", className="genres"),
                             html.Div(
                                 className="description-box",
@@ -189,6 +196,7 @@ def layout_detail(game_id):
                             html.Div(className="stat-card", children=[html.Div("App ID", className="label"), html.Div(str(game_id), className="value")]),
                             html.Div(className="stat-card", children=[html.Div("Avg Playtime", className="label"), html.Div(str(avg_playtime) + " Minutes", className="value")]),
                             html.Div(className="stat-card", children=[html.Div("Total Reviews", className="label"), html.Div(str(total_number_reviews), className="value")]),
+                            html.Div(className="stat-card", children=[html.Div("Achievements", className="label"), html.Div(str(achievements), className="value")]),
                         ],
                     ),
                 ],
@@ -201,7 +209,8 @@ def layout_detail(game_id):
                         className="card",
                         children=[
                             html.Div(className="card-header", children=[html.H2("Info Chart", className="card-title")]),
-                            html.Div("Info Chart Placeholder", className="placeholder-content"),
+                            html.Div(className="actual-content", children=[radar_chart_content]),
+                            #html.Div("Info Chart Placeholder", className="placeholder-content"),
                         ],
                     ),
                     # ... Add the rest of your cards here ...

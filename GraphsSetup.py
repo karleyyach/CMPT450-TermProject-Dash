@@ -86,6 +86,11 @@ genre_popularity_fig = px.line(
     height=600
 )
 
+genre_popularity_fig.update_layout(
+    autosize=True,
+    title_x=0.05
+)
+
 
 # Active Players Per Genre
 # there isn't actually a way to show active players so uhh this will work for now
@@ -114,6 +119,8 @@ df_active_players = df_active_players.sort_values(by='Estimated owners by review
 
 # only keep the top 10 genres
 df_active_players = df_active_players.head(10)
+df_active_players['Genres'] = df_active_players['Genres'].replace('Massively Multiplayer', 'MMO')
+df_active_players['Genres'] = df_active_players['Genres'].replace('Free to Play', 'F2P')
 # bar chart of players per genre
 # hard to read genres vertically, so making horizontal
 active_players_fig = px.bar(
@@ -121,60 +128,82 @@ active_players_fig = px.bar(
     y='Genres', 
     x='Estimated owners by review', 
     title='Estimated Owners Per Genre', 
-    text='Estimated owners by review',
-    orientation='h')
+    text='Estimated owners by review')
+
+active_players_fig.update_layout(
+    autosize=True,
+    title_x=0.05,
+    margin=dict(l=100)
+    
+)
 
 
 # Bubble Chart
+# x: avg playtime forever, y: recommendations, size: total reviews, color: genre
 df_bubble = df.copy()
-df_bubble = df_bubble[['Genres', 'Average playtime forever', 'Positive Review %']]
+df_bubble = df_bubble[['Genres', 'Average playtime forever', 'Recommendations', 'Total number of reviews', 'AppID']]
+# remove 0s
+df_bubble = df_bubble[(df_bubble['Average playtime forever'] > 0) & (df_bubble['Recommendations'] > 0) & (df_bubble['Total number of reviews'] > 0)]
 df_bubble['Genres'] = df_bubble['Genres'].apply(str_to_list)
 df_bubble = df_bubble.explode('Genres')
-df_bubble = df_bubble.groupby('Genres', as_index=False).agg({
-    'Average playtime forever': 'mean',
-    'Positive Review %': 'mean'
-})
-df_bubble = df_bubble.sort_values(by='Positive Review %', ascending=False)
-# only keep the top 10 genres by review
-df_bubble = df_bubble.head(10)
-# size will be count of games in that genre
-genre_counts = df_bubble['Genres'].value_counts().reset_index()
-genre_counts.columns = ['Genres', 'count']
-print(genre_counts)
-df_bubble = pd.merge(df_bubble, genre_counts, on='Genres')
+
+bubble_stats = df_bubble.groupby('Genres').agg({'Average playtime forever': 'mean',
+    'Recommendations': 'mean',
+    'Total number of reviews': 'sum',
+    'AppID': 'count'  # to count number of games per genre
+}).reset_index()
+
+bubble_stats.rename(columns={'AppID': 'Number of games'}, inplace=True)
+
+top_genres = bubble_stats.nlargest(10, 'Number of games')
+
+
 bubble_fig = px.scatter(
-    df_bubble, 
+    top_genres, 
     x='Average playtime forever', 
-    y='Positive Review %', 
-    size='count', 
+    y='Recommendations', 
+    size='Total number of reviews', 
     color='Genres', 
-    hover_name='Genres', 
-    title='Average Playtime vs Positive Review % per Genre',
-    size_max=60)
-# need to change the values on this because everything is 1 so there is no size 
-# difference but good enough for now surely
+    hover_name='Genres',
+    hover_data={
+        'Average playtime forever': ':.1f',
+        'Recommendations': ':,.0f',
+        'Total number of reviews': ':,',
+        'Number of games': ':,',
+        'Genres': False
+        }, 
+    title='Game Engagement by Genre',
+    size_max=60
+    )
+
+bubble_fig.update_layout(
+    autosize=True,
+    title_x=0.05
+)
+
+
 
 
 # Genre Word Cloud
 df_wc = df.copy()
-df_wc = df_wc['Genres']
-
+df_wc = df_wc['Tags']
 
 df_wc = df_wc.apply(str_to_list)
 df_wc = df_wc.explode()
 wc_count = df_wc.value_counts().reset_index()
 
 wc_dict = {}
-for k, v in zip(wc_count['Genres'], wc_count['count']):
+for k, v in zip(wc_count['Tags'], wc_count['count']):
     wc_dict[k] = int(v)
 
 wc = WordCloud(
-    width=800, 
-    height=600, 
+    width=1000, 
+    height=800, 
     background_color="#171a21", 
     colormap="Blues").generate_from_frequencies(wc_dict)
 wc_fig = px.imshow(wc, aspect="auto")
 wc_fig.update_layout(xaxis_title='', yaxis_title='', xaxis=dict(visible=False), yaxis=dict(visible=False))
+wc_fig.update_traces(hoverinfo='skip', hovertemplate=None) # removing info on hover bc doesnt show anything
 
 df_handled['Clickable_Info'] = df_handled['Name'] + "___" + df_handled['AppID'].astype(str)
 
@@ -234,3 +263,62 @@ def get_game_data(game_id):
         game_row['Price_Formatted'] = "N/A"
 
     return game_row
+
+# used for radar chart scaling
+PLAYTIME_MAX = df['Average playtime forever'].quantile(0.95)
+REVIEWS_MAX = df['total_reviews'].quantile(0.95)
+RECOMMENDATIONS_MAX = df['Recommendations'].quantile(0.95)
+ACHIEVEMENTS_MAX = df['Achievements'].quantile(0.95)
+
+# charts for game detail page based on AppID
+def radar_chart(game_data):
+    if game_data is None:
+        print("data is None")
+        return None
+    
+    if game_data.empty:
+        print("data is empty")
+        return None
+    
+    try:
+        categories = ['Positive Review %', 'Average playtime forever', 'Total number of reviews', 'Recommendations', 'Achievements']
+    
+        positive_review = game_data['Positive Review %'].values[0]
+        avg_playtime = game_data['Average playtime forever'].values[0]
+        total_reviews = game_data['total_reviews'].values[0]
+        recommendations = game_data['Recommendations'].values[0]
+        achievements = game_data['Achievements'].values[0]
+    
+        # normalize based on global max
+        values = [
+            positive_review,
+            min((avg_playtime / PLAYTIME_MAX) * 100, 100),
+            min((total_reviews / REVIEWS_MAX) * 100, 100),
+            min((recommendations / RECOMMENDATIONS_MAX) * 100, 100), 
+            min((achievements / ACHIEVEMENTS_MAX) * 100, 100)
+        ]
+
+        radar_fig = px.line_polar(
+            r=values + [values[0]],  # close the loop
+            theta=categories + [categories[0]],
+            line_close=True,
+            title=f"Game Metrics Radar Chart for {game_data['Name'].values[0]}",
+        )
+
+        radar_fig.update_traces(fill='toself')
+        radar_fig.update_layout(
+            autosize=True,
+            title_x=0.05,
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 100],
+                    ticksuffix='%'
+                )
+            )
+        )
+
+        return radar_fig
+    except Exception as e:
+        print(f"Error creating radar chart: {e}")
+        return None
