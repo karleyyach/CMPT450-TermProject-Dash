@@ -146,7 +146,7 @@ def layout_detail(game_id):
     name = game_df['Name'].iloc[0]
     price = game_df.get('Price_Formatted', "N/A").iloc[0]
     description = game_df.get('About the game', "No description").iloc[0]
-    # image_url = game_df.get('Header image', "").iloc[0]
+    image_url = game_df.get('Website', "").iloc[0]
     release_date = game_df.get('Release Date', "N/A").iloc[0]
     developer = game_df.get('Developers', "N/A").iloc[0]
     publisher = game_df.get('Publishers', "N/A").iloc[0]
@@ -172,7 +172,9 @@ def layout_detail(game_id):
             html.Section(
                 className="game-summary-section",
                 children=[
-                    html.Div("Game Cover", className="game-cover"),
+                    html.Div(className="game-cover", children = [
+                        html.Img(src=image_url, alt=name)
+                    ]),
                     html.Div(
                         className="game-info",
                         children=[

@@ -7,6 +7,7 @@ from wordcloud import WordCloud
 # Incorporate data
 # df = pd.read_excel(r"D:\_University\Fall 2025\cleaned_games.csv") # Change this based on who is running the code
 df = pd.read_csv('cleaned_games.csv', index_col=False)
+HeaderimagesTable = pd.read_csv('gamesHeaderImagesTable.csv', index_col=False)
 
 # Style Setup
 
@@ -241,10 +242,12 @@ def get_game_data(game_id):
         print(f"Game ID {target_id} not found in dataset.")
         return None
 
+    # Read Table for Header Images
+    website_data = HeaderimagesTable[['AppID', 'Website']]
+    game_row = pd.merge(game_row, website_data, on='AppID', how='left')
     
-    # If your CSV is missing 'Header image', we add a placeholder
-    # if 'Header image' not in game_row.columns:
-    #     game_row['Header image'] = ""
+    if 'Website' not in game_row.columns:
+        game_row['Website'] = "N/A"
 
     # Release Date
     if 'Release Date' not in game_row.columns:
@@ -281,6 +284,7 @@ def radar_chart(game_data):
         return None
     
     try:
+
         categories = ['Positive Review %', 'Average playtime forever', 'Total number of reviews', 'Recommendations', 'Achievements']
     
         positive_review = game_data['Positive Review %'].values[0]
