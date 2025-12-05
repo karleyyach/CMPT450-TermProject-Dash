@@ -603,3 +603,32 @@ input[type="range"]::-webkit-slider-thumb {
 .nav-btn-link:hover {
     color: var(--text-bright);
 }
+
+.rec-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+.rec-card {
+    flex: 1;
+    background: var(--bg-card-header);
+    border-radius: 4px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+.rec-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+.rec-img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+.rec-name {
+    padding: 10px;
+    color: white;
+    font-size: 0.9rem;
+    text-align: center;
+}

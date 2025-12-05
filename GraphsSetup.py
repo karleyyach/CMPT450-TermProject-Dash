@@ -4,6 +4,11 @@ import GraphStyle as gs_style
 import plotly.io as pio
 from wordcloud import WordCloud
 import random
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import pickle
+from sklearn.metrics.pairwise import linear_kernel
+
 
 # Incorporate data
 # df = pd.read_excel(r"D:\_University\Fall 2025\cleaned_games.csv") # Change this based on who is running the code
@@ -67,6 +72,7 @@ search_options = [
     {'label': str(row['Name']), 'value': row['AppID']} 
     for index, row in df_search.iterrows()
 ]
+
 
 # Group by year, then apply a function to count genres for that year's subset.
 genre_counts_by_year = df_genre_analysis.groupby('Year released')['Genres'].apply(
@@ -343,3 +349,72 @@ def get_random_game_id():
     all_ids = df['AppID'].unique()
     # Pick one
     return random.choice(all_ids)
+
+# ------------------- RECOMMENDATION ENGINE (OPTIMIZED) -------------------- #
+# This relies on the pre-built pickle file from build_recs.py
+# We do NOT perform fit_transform or cosine_similarity here to save RAM
+
+try:
+    with open('recommendation_model.pkl', 'rb') as f:
+        rec_data = pickle.load(f)
+        
+    tfidf_matrix = rec_data['matrix']
+    indices_map = rec_data['indices']
+    all_app_ids = rec_data['app_ids']
+    model_loaded = True
+    print("Success: Recommendation model loaded.")
+except FileNotFoundError:
+    print("WARNING: 'recommendation_model.pkl' not found. Recommendations will be disabled.")
+    print("Please run 'build_recs.py' once to generate the model.")
+    model_loaded = False
+
+def get_recommendations(app_id):
+    if not model_loaded: return pd.DataFrame()
+
+    try:
+        app_id = int(app_id)
+        
+        # 1. Get the matrix index
+        idx = indices_map.get(app_id)
+        if idx is None: return pd.DataFrame()
+
+        # 2. Calculate Similarity
+        cosine_sim = linear_kernel(tfidf_matrix[idx], tfidf_matrix)
+        
+        # 3. Get Top Scores
+        sim_scores = list(enumerate(cosine_sim[0]))
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        sim_scores = sim_scores[1:5] # Top 4
+        
+        # 4. Get the AppIDs
+        matrix_indices = [i[0] for i in sim_scores]
+        recommended_ids = [all_app_ids[i] for i in matrix_indices]
+        
+        # 5. Retrieve Name/ID from Main DF (Note: We do NOT ask for HeaderImage here anymore)
+        recs = df[df['AppID'].isin(recommended_ids)][['Name', 'AppID']].copy()
+        
+        # 6. Merge with the Images Table to get the picture
+        # Based on your get_game_data function, it seems your images might be in the 'Website' column?
+        # We will try to get 'HeaderImage', but fallback to 'Website' if that's what you use.
+        
+        img_cols = ['AppID']
+        if 'HeaderImage' in HeaderimagesTable.columns:
+            img_cols.append('HeaderImage')
+        elif 'Website' in HeaderimagesTable.columns:
+            img_cols.append('Website')
+            
+        # Select only the needed columns to avoid clutter
+        images_subset = HeaderimagesTable[img_cols]
+        
+        # Merge
+        recs = pd.merge(recs, images_subset, on='AppID', how='left')
+        
+        # 7. Rename column to 'HeaderImage' so app.py can find it
+        if 'Website' in recs.columns:
+            recs.rename(columns={'Website': 'HeaderImage'}, inplace=True)
+            
+        return recs
+
+    except Exception as e:
+        print(f"Rec Error: {e}")
+        return pd.DataFrame()

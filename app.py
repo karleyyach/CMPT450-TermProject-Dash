@@ -173,8 +173,33 @@ def layout_detail(game_id):
         "height": "190px", # Standard steam widget height
         "overflow": "hidden",
         "margin-top": "20px"
-    }
-)
+        }
+    )
+
+    # 1. Get recommendations
+    recs_df = gs.get_recommendations(game_id)
+    
+    # 2. Build the HTML for recommendations
+    if not recs_df.empty:
+        rec_cards = []
+        for index, row in recs_df.iterrows():
+            
+            img_src = row.get('HeaderImage', 'https://via.placeholder.com/300x140?text=No+Image')
+            
+            card = html.A( # Make the whole card clickable
+                href=f"/game/{row['AppID']}",
+                className="rec-card",
+                children=[
+                    html.Img(src=img_src, className="rec-img"),
+                    html.Div(row['Name'], className="rec-name")
+                ]
+            )
+            rec_cards.append(card)
+            
+        recommendation_section = html.Div(className="rec-container", children=rec_cards)
+    else:
+        recommendation_section = html.Div("No recommendations found.")
+
 
     return html.Main(
         className="detail-page",
@@ -231,6 +256,13 @@ def layout_detail(game_id):
                         children=[
                             html.Div(className="card-header", children=[html.H2("Steam Link", className="card-title")]),
                             html.Div(className="actual-content", children=[steam_widget])
+                        ],
+                    ),
+                    html.Div(
+                        className="card",
+                        children=[
+                            html.Div(className="card-header", children=[html.H2("Recommendation Section", className="card-title")]),
+                            html.Div(className="actual-content", children=[recommendation_section])
                         ],
                     ),
                 ],
@@ -358,6 +390,8 @@ def go_to_random_game(n_clicks):
         random_id = gs.get_random_game_id()
         return f"/game/{random_id}"
     return dash.no_update
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
