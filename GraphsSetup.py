@@ -3,6 +3,7 @@ import plotly.express as px
 import GraphStyle as gs_style
 import plotly.io as pio
 from wordcloud import WordCloud
+import random
 
 # Incorporate data
 # df = pd.read_excel(r"D:\_University\Fall 2025\cleaned_games.csv") # Change this based on who is running the code
@@ -57,6 +58,15 @@ df_handled = df.copy()
 # Genre popularity by release count over time
 df_genre_analysis = df.copy()
 df_genre_analysis.dropna(subset=['Genres'], inplace=True)
+
+# ========== Search Bar Setup =============
+df_search = df[['Name', 'AppID']].dropna().drop_duplicates(subset=['AppID'])
+
+# Format for dcc.Dropdown: [{'label': 'Game Name', 'value': 123}]
+search_options = [
+    {'label': str(row['Name']), 'value': row['AppID']} 
+    for index, row in df_search.iterrows()
+]
 
 # Group by year, then apply a function to count genres for that year's subset.
 genre_counts_by_year = df_genre_analysis.groupby('Year released')['Genres'].apply(
@@ -326,3 +336,10 @@ def radar_chart(game_data):
     except Exception as e:
         print(f"Error creating radar chart: {e}")
         return None
+    
+def get_random_game_id():
+    """Returns a random AppID from the dataset"""
+    # Get a list of all unique IDs
+    all_ids = df['AppID'].unique()
+    # Pick one
+    return random.choice(all_ids)

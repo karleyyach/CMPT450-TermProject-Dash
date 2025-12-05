@@ -458,3 +458,148 @@ input[type="range"]::-webkit-slider-thumb {
 .description-box::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-accent);
 }
+
+/* ---------------------------------------------------------
+   6. SEARCH BAR & TOP NAV (Added Updates)
+--------------------------------------------------------- */
+
+/* Make the top bar a Flex container to align items */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Spreads items out */
+  height: 70px; /* Fixed height for consistency */
+  background-color: var(--bg-panel);
+  padding: 0 30px;
+}
+
+/* 1. Left: Navigation Links */
+.nav-links {
+  flex: 1; /* Takes up equal space on the left */
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Space between links */
+}
+
+.nav-links a {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.separator {
+  color: var(--border-color);
+}
+
+/* 2. Right: Spacer (Invisible) */
+.nav-spacer {
+  flex: 1; /* Takes up equal space on the right to force Search to exact center */
+}
+
+/* 3. Center: Search Wrapper */
+.search-wrapper {
+  width: 500px; 
+  position: relative;
+}
+
+/* Limit the width of the dropdown itself */
+.steam-dropdown {
+  width: 100%;
+  max-width: 500px; /* Maximum width of search bar */
+  font-family: var(--font-family);
+}
+
+
+/* ---------------------------------------------------------
+   7. DASH DROPDOWN OVERRIDES (The "Steam" Look)
+   Dash Dropdowns use React-Select, which is hard to style.
+   We must override the generated classes.
+--------------------------------------------------------- */
+
+/* The Main Input Box */
+.steam-dropdown .Select-control {
+  background-color: #101419 !important; /* Very dark background */
+  border: 1px solid var(--border-color) !important;
+  border-radius: 25px !important;
+  height: 40px;
+  box-shadow: none !important; /* Remove blue glow */
+  transition: border 0.2s;
+}
+
+.steam-dropdown .Select-control:hover {
+  border-color: var(--primary-accent) !important; /* Steam Blue on hover */
+}
+
+/* The Placeholder Text (Search for a game...) */
+.steam-dropdown .Select-placeholder,
+.steam-dropdown .Select--single > .Select-control .Select-value {
+  line-height: 40px !important; /* Center text vertically */
+  padding-left: 10px !important;
+  color: var(--text-muted) !important;
+}
+
+/* The Text Input Area (When typing) */
+.steam-dropdown .Select-input input {
+  color: var(--text-bright) !important;
+  padding: 10px 0 !important;
+}
+
+/* The Dropdown Menu Container (The list that pops up) */
+.steam-dropdown .Select-menu-outer {
+  background-color: var(--bg-card-header) !important;
+  border: 1px solid var(--primary-accent) !important;
+  color: var(--text-light) !important;
+  margin-top: 5px;
+}
+
+/* Individual Options in the List */
+.steam-dropdown .Select-option {
+  background-color: var(--bg-card-header) !important;
+  color: var(--text-light) !important;
+}
+
+/* Option Hover State */
+.steam-dropdown .Select-option.is-focused {
+  background-color: var(--primary-accent) !important;
+  color: #fff !important;
+}
+
+/* The 'X' to clear text */
+.steam-dropdown .Select-clear {
+  color: var(--text-muted) !important;
+  font-size: 1.2rem;
+}
+.steam-dropdown .Select-clear:hover {
+  color: #d9534f !important; /* Red on hover */
+}
+
+/* The Arrow on the right */
+.steam-dropdown .Select-arrow {
+  border-color: var(--text-muted) transparent transparent !important;
+}
+
+/* ---------------------------------------------------------
+   8. RANDOM GAME BUTTON STYLING
+--------------------------------------------------------- */
+.nav-btn-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    
+    /* Inherit font styles from the parent (.nav-links) */
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    
+    /* Match the link color */
+    color: var(--primary-accent);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.nav-btn-link:hover {
+    color: var(--text-bright);
+}

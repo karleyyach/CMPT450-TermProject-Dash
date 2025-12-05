@@ -165,6 +165,17 @@ def layout_detail(game_id):
         else html.Div("No data available for chart", className="placeholder-content")
     )
 
+    steam_widget = html.Iframe(
+    src=f"https://store.steampowered.com/widget/{game_id}/",
+    style={
+        "border": "none",
+        "width": "95%", 
+        "height": "190px", # Standard steam widget height
+        "overflow": "hidden",
+        "margin-top": "20px"
+    }
+)
+
     return html.Main(
         className="detail-page",
         children=[
@@ -215,7 +226,13 @@ def layout_detail(game_id):
                             #html.Div("Info Chart Placeholder", className="placeholder-content"),
                         ],
                     ),
-                    # ... Add the rest of your cards here ...
+                    html.Div(
+                        className="card",
+                        children=[
+                            html.Div(className="card-header", children=[html.H2("Steam Link", className="card-title")]),
+                            html.Div(className="actual-content", children=[steam_widget])
+                        ],
+                    ),
                 ],
             ),
         ],
@@ -227,14 +244,42 @@ app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
 
     # The top navigation bar will be present on all pages
-    html.Div(
+     html.Div(
         className="top-bar",
         children=[
-            dcc.Link("| Home |", href="/"), # Use "/" for the root/home page
-            dcc.Link(" Game Details |", href="/detail"),
+            # Left side: Navigation Links
+            html.Div(
+                className="nav-links",
+                children=[
+                    dcc.Link("Home", href="/"),
+                    html.Span(" | ", className="separator"), # distinct separator for styling
+                    html.Button(
+                        "Random Game", 
+                        id="btn-random-game", 
+                        className="nav-btn-link"
+                    ),
+                ]
+            ),
+
+            # Center: Search Bar
+            html.Div(
+                className="search-wrapper",
+                children=[
+                    dcc.Dropdown(
+                        id='game-search-dropdown',
+                        options=gs.search_options,
+                        placeholder="Search for a game...",
+                        searchable=True,
+                        clearable=True,
+                        className="steam-dropdown" # Custom class for CSS targeting
+                    )
+                ]
+            ),
+            
+            # Right side: Empty div to help balance the flexbox centering (optional, but good for symmetry)
+            html.Div(className="nav-spacer") 
         ],
     ),
-    
     # The 'page-content' div is where the layout for each page will be rendered
     html.Div(id='page-content')
 ])
@@ -289,6 +334,30 @@ def update_url_on_click(clickData):
     except Exception as e:
         print(f"Error parsing click data: {e}")
         return dash.no_update
+    
+# 3. SEARCH BAR CALLBACK
+@app.callback(
+    Output('url', 'pathname', allow_duplicate=True),
+    Input('game-search-dropdown', 'value'),
+    prevent_initial_call=True
+)
+def update_url_on_search(game_id):
+    if game_id:
+        # Navigate to the specific game page
+        return f"/game/{game_id}"
+    return dash.no_update
+
+# 4. Random Game Callback
+@app.callback(
+    Output('url', 'pathname', allow_duplicate=True),
+    Input('btn-random-game', 'n_clicks'),
+    prevent_initial_call=True
+)
+def go_to_random_game(n_clicks):
+    if n_clicks:
+        random_id = gs.get_random_game_id()
+        return f"/game/{random_id}"
+    return dash.no_update
 
 if __name__ == '__main__':
     app.run(debug=True)
