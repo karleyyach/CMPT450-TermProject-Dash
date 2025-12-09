@@ -206,16 +206,17 @@ header {
 
 .custom-select-wrapper {
   position: relative;
+  color: var(--border-color);   /* (NEW) changed dropdown text color for greater visibility */
 }
 
 .custom-select-wrapper::after {
-  content: '▼';
+  /* content: '▼'; */
   position: absolute;
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.7rem;
-  color: var(--text-muted);
+  /* color: var(--text-muted); */
   pointer-events: none;
 }
 
@@ -225,7 +226,7 @@ header {
   border-radius: 4px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-main);
-  color: var(--text-light);
+  color: var(--bg-panel);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
